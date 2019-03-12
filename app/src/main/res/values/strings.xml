@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">ListeFilm</string>
+
+    <!-- Main Activity -->
+    <string name="main_titre">Ma liste de film à voir !</string>
+    <string name="main_consulterListe">Consulter la liste</string>
+
+    <!-- Cell Film Liste -->
+    <string name="cell_titre">Titre</string>
+    <string name="cell_realisateur">Réalisateur</string>
+    <string name="cell_producteur">Producteur</string>
+    <string name="cell_annee">Annee</string>
+    <string name="cell_imgDescription">Ceci est une image de l\'affiche de film.</string>
+
+    <!-- Film Liste Activity -->
+    <string name="filmliste_ajout">Ajout</string>
+    <string name="filmListe_supprTout">Suppr Tout</string>
+    <string name="filmListe_asyncS">Async S</string>
+    <string name="filmListe_asyncP">Async P</string>
+    <string name="filmListe_threads">Threads</string>
+    <string name="filmListe_handlerTR">Handler T-R</string>
+    <string name="filmListe_handlerTM">Handler T-M</string>
+    <string name="filmListe_pool">Pool</string>
+
+</resources>
