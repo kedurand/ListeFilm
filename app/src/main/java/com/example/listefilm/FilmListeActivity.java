@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -14,6 +15,7 @@ import android.widget.Toast;
 
 import com.example.listefilm.adapter.FilmAdapter;
 import com.example.listefilm.asynctask.MyAsyncTask;
+import com.example.listefilm.handler.MyHandlerThreadMessage;
 import com.example.listefilm.model.Film;
 import com.example.listefilm.thread.MyRunnable;
 
@@ -47,6 +49,12 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     private HandlerThread handlerThread;
     // On crée une référence d'handler pour poster des travail dessus
     private Handler handlerFilm;
+    // On crée un handler thread prenant en compte les messages
+    // Todo en faire une nouvelle classe qui implements Handlercallbak
+    private MyHandlerThreadMessage handlerThreadMessage;
+    // Récupère un handler pour gérer le queue du HandlerThread
+    private Handler handlerFilmMessage;
+    // Pool de thread pour gérer la quantité de thread exécuté
     private ThreadPoolExecutor threadPoolExecutor;
 
     @Override
@@ -80,10 +88,19 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
         // On récupère le Handler UI pour déposer du travail dessus
         this.handlerUI = new Handler(Looper.getMainLooper());
+
+        // Handler pour les travaux
         this.handlerThread = new HandlerThread("HandlerThreadFilm");
         this.handlerThread.start();
         // On récupère le Handler Perso pour intéragir avec
         this.handlerFilm = new Handler(this.handlerThread.getLooper());
+
+        // On créer un handler thread pour les messages
+        this.handlerThreadMessage = new MyHandlerThreadMessage("HandlerThreadFilmMessage");
+        this.handlerThreadMessage.start();
+        // On recupère le handler message
+        this.handlerFilmMessage = new Handler(this.handlerThreadMessage.getLooper());
+
         this.threadPoolExecutor = new ThreadPoolExecutor(2,4,
                                                         100, TimeUnit.SECONDS,
                                                         new LinkedBlockingDeque<Runnable>());
@@ -177,10 +194,21 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-    // Un Handler Thread Message fonctionne comme un Handler Thread classique mais 
+    // Un Handler Thread Message fonctionne comme un Handler Thread classique
+    // Il permet, en plus, le post de Message qui sont des évenement
+    // Le handler devra donc pouvoir réagir en fonction du type de message
+    // On peut passer des objets directement dans le message
     private void handlerTM(){
         for(Film film : this.filmList) {
-            this.handlerFilm.post(new MyRunnable(film, this.adapter, this.sImgURL, this.handlerUI));
+            // Au lieu de recréer un message à chaque film
+            // on va obtenir un message déjà existant si possible
+            Message msg = Message.obtain();
+            // Donne le type depuis l'énumération de la casse du type de message
+            msg.what = MyHandlerThreadMessage.iMsgType_DownloadImg;
+            // Lui passe un objet en paramètre, devoir faire un objet pour englober tout
+            msg.obj = this.adapter;
+            // Post un message dans la queue du handler sous forme runnable
+            this.handlerFilmMessage.post(msg.getCallback());
         }
     }
 
@@ -215,7 +243,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
                 this.handlerTR();
                 break;
             case R.id.bt_handlerTM:
-
+                this.handlerTM();
                 break;
             case R.id.bt_pool:
                 this.pool();
