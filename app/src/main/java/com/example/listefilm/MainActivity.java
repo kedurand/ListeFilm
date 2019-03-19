@@ -8,6 +8,7 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     Button btGoToFilmListe;
+    Button btGoToCertificateListe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,8 +20,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initialize(){
         //Enregistrer le bouton pour le listener
-        this.btGoToFilmListe = (Button) findViewById(R.id.bt_consulterListe);
+        this.btGoToFilmListe = findViewById(R.id.bt_consulterListeFilm);
         this.btGoToFilmListe.setOnClickListener(this);
+
+        this.btGoToCertificateListe = findViewById(R.id.bt_consulterListeCertificate);
+        this.btGoToCertificateListe.setOnClickListener(this);
     }
 
 
@@ -29,8 +33,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Intent intent = null;
 
         switch(view.getId()){
-            case R.id.bt_consulterListe:
+            case R.id.bt_consulterListeFilm:
                 intent = new Intent(this, FilmListeActivity.class);
+                break;
+            case R.id.bt_consulterListeCertificate :
+                intent = new Intent(this, CertificateListeActivity.class);
                 break;
             default:
                 break;

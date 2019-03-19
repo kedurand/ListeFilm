@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
+    android:layout_height="fill_parent">
 
     <ImageView
         android:id="@+id/img_affiche"
         android:layout_width="wrap_content"
         android:layout_height="79dp"
         android:layout_weight="1"
-        android:contentDescription="@string/cell_imgDescription"
+        android:contentDescription="@string/filmCell_imgDescription"
         tools:srcCompat="@tools:sample/avatars" />
 
     <LinearLayout
@@ -24,28 +23,28 @@
             android:id="@+id/txt_titre"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/cell_titre"
+            android:text="@string/filmCell_titre"
             android:textColor="@color/colorPrimary" />
 
         <TextView
             android:id="@+id/txt_realisateur"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/cell_realisateur"
+            android:text="@string/filmCell_realisateur"
             android:textColor="@color/colorPrimary" />
 
         <TextView
             android:id="@+id/txt_producteur"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/cell_producteur"
+            android:text="@string/filmCell_producteur"
             android:textColor="@color/colorPrimary" />
 
         <TextView
             android:id="@+id/txt_annee"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/cell_annee"
+            android:text="@string/filmCell_annee"
             android:textColor="@color/colorPrimary" />
 
     </LinearLayout>
