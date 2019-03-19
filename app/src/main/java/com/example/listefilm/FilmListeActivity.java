@@ -1,12 +1,25 @@
 package com.example.listefilm;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.SearchEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -17,6 +30,7 @@ import com.example.listefilm.adapter.FilmAdapter;
 import com.example.listefilm.asynctask.MyAsyncTask;
 import com.example.listefilm.handler.MyHandlerThreadMessage;
 import com.example.listefilm.model.Film;
+import com.example.listefilm.model.ParamThread;
 import com.example.listefilm.thread.MyRunnable;
 
 import java.util.ArrayList;
@@ -50,12 +64,17 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     // On crée une référence d'handler pour poster des travail dessus
     private Handler handlerFilm;
     // On crée un handler thread prenant en compte les messages
-    // Todo en faire une nouvelle classe qui implements Handlercallbak
-    private MyHandlerThreadMessage handlerThreadMessage;
+    private HandlerThread handlerThreadMessage;
     // Récupère un handler pour gérer le queue du HandlerThread
     private Handler handlerFilmMessage;
     // Pool de thread pour gérer la quantité de thread exécuté
     private ThreadPoolExecutor threadPoolExecutor;
+
+    // Gestion des permissions
+    // Cette variable permet de savoir quelle permission est demandé à l'utilisateur
+    public static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    public static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 2;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,23 +87,23 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
     private void initialize(){
         //Enregistrer les boutons pour le listener
-        this.btAjout = (Button) findViewById(R.id.bt_ajout);
+        this.btAjout = findViewById(R.id.bt_ajout);
         this.btAjout.setOnClickListener(this);
-        this.btSupprTout = (Button) findViewById(R.id.bt_supprTout);
+        this.btSupprTout = findViewById(R.id.bt_supprTout);
         this.btSupprTout.setOnClickListener(this);
-        this.btAsyncS = (Button) findViewById(R.id.bt_asyncS);
+        this.btAsyncS = findViewById(R.id.bt_asyncS);
         this.btAsyncS.setOnClickListener(this);
-        this.btAsyncP = (Button) findViewById(R.id.bt_asyncP);
+        this.btAsyncP = findViewById(R.id.bt_asyncP);
         this.btAsyncP.setOnClickListener(this);
-        this.btThreads = (Button) findViewById(R.id.bt_threads);
+        this.btThreads = findViewById(R.id.bt_threads);
         this.btThreads.setOnClickListener(this);
-        this.btHandlerTR = (Button) findViewById(R.id.bt_handlerTR);
+        this.btHandlerTR = findViewById(R.id.bt_handlerTR);
         this.btHandlerTR.setOnClickListener(this);
-        this.btHandlerTM = (Button) findViewById(R.id.bt_handlerTM);
+        this.btHandlerTM = findViewById(R.id.bt_handlerTM);
         this.btHandlerTM.setOnClickListener(this);
-        this.btPool  = (Button) findViewById(R.id.bt_pool);
+        this.btPool  = findViewById(R.id.bt_pool);
         this.btPool.setOnClickListener(this);
-        this.listView = (ListView)findViewById(R.id.lv_filmList);
+        this.listView = findViewById(R.id.lv_filmList);
 
         // On récupère le Handler UI pour déposer du travail dessus
         this.handlerUI = new Handler(Looper.getMainLooper());
@@ -95,15 +114,27 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
         // On récupère le Handler Perso pour intéragir avec
         this.handlerFilm = new Handler(this.handlerThread.getLooper());
 
-        // On créer un handler thread pour les messages
-        this.handlerThreadMessage = new MyHandlerThreadMessage("HandlerThreadFilmMessage");
+        // On créer un handler thread classique
+        this.handlerThreadMessage = new HandlerThread("HandlerThreadFilmMessage");
         this.handlerThreadMessage.start();
-        // On recupère le handler message
-        this.handlerFilmMessage = new Handler(this.handlerThreadMessage.getLooper());
+        // On recupère le handler pour le manipuler en ajoutant le handler thread message
+        this.handlerFilmMessage = new Handler(  this.handlerThreadMessage.getLooper(),
+                                                new MyHandlerThreadMessage());
 
         this.threadPoolExecutor = new ThreadPoolExecutor(2,4,
                                                         100, TimeUnit.SECONDS,
                                                         new LinkedBlockingDeque<Runnable>());
+
+        // Gestion des permissions
+        // NE SURTOUT PAS OUBLIER DE LES DECLARER DANS LE MANIFEST
+        // Attention ne fonctionne pas en version API 5 ou moins
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+            // Demande à l'utilisateur la permission si pas déjà donné
+            this.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                    MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
     }
 
     private void loadingListView(){
@@ -153,7 +184,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     // Boucle sur chaque film pour ajouter une image téléchargée depuis l'URL
     // L'execution se fait séquentiellement, on lance un thread par film
     private void asyncS(){
-        MyAsyncTask myAsyncTask = null;
+        MyAsyncTask myAsyncTask;
 
         for(Film film : this.filmList) {
             myAsyncTask = new MyAsyncTask(film, this.adapter);
@@ -163,7 +194,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
     // On veut faire une exécution de aSyncTask en parallèle
     private void asyncP(){
-        MyAsyncTask myAsyncTask = null;
+        MyAsyncTask myAsyncTask;
 
         for(Film film : this.filmList) {
             myAsyncTask = new MyAsyncTask(film, this.adapter);
@@ -173,7 +204,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
     // Génération non limitée de thread -> déconseillé car prend toute les ressources dispo
     private void threads(){
-        Thread thread = null;
+        Thread thread;
 
         for(Film film : this.filmList) {
             thread = new Thread(new MyRunnable(film, this.adapter, this.sImgURL, this.handlerUI));
@@ -206,9 +237,9 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
             // Donne le type depuis l'énumération de la casse du type de message
             msg.what = MyHandlerThreadMessage.iMsgType_DownloadImg;
             // Lui passe un objet en paramètre, devoir faire un objet pour englober tout
-            msg.obj = this.adapter;
+            msg.obj = new ParamThread(film, this.adapter, this.sImgURL, this.handlerUI);
             // Post un message dans la queue du handler sous forme runnable
-            this.handlerFilmMessage.post(msg.getCallback());
+            this.handlerFilmMessage.sendMessage(msg);
         }
     }
 
@@ -226,6 +257,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
         switch (view.getId()){
             case R.id.bt_ajout:
                 this.ajoutFilm();
+                this.checkLocationPermission();
                 break;
             case R.id.bt_supprTout:
                 this.supprTout();
@@ -260,4 +292,64 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
         }
     }
+
+    // Quand l'utilisateur répond à la requête de permission
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case FilmListeActivity.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Toast.makeText(this.getApplicationContext(),"Permission accordée",
+                                    Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(this.getApplicationContext(),"Permission non accordée",
+                            Toast.LENGTH_SHORT).show();
+                    // permission not granted
+                    startActivity(new Intent(this, MainActivity.class));
+                }
+                break;
+            case FilmListeActivity.MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Toast.makeText(this.getApplicationContext(),"Permission accordée",
+                            Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(this.getApplicationContext(),"Permission non accordée",
+                            Toast.LENGTH_SHORT).show();
+                    // permission not granted
+                    startActivity(new Intent(this, MainActivity.class));
+                }
+                break;
+            // other 'case' lines to check for other
+            // permissions this app might request.
+            default:
+                break;
+        }
+
+    }
+
+    public void checkLocationPermission(){
+        // Gestion des permissions
+        // NE SURTOUT PAS OUBLIER DE LES DECLARER DANS LE MANIFEST
+        // Attention ne fonctionne pas en version API 5 ou moins
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+            // Demande à l'utilisateur la permission si pas déjà donné
+            this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+        }
+    }
+
 }
