@@ -2,13 +2,13 @@ package com.example.listefilm.model;
 
 import com.orm.SugarRecord;
 
-public class Certificate extends SugarRecord {
+public class MonCertificate extends SugarRecord {
     private String contenu;
 
-    public Certificate() {
+    public MonCertificate() {
     }
 
-    public Certificate(String contenu) {
+    public MonCertificate(String contenu) {
         this.contenu = contenu;
     }
 

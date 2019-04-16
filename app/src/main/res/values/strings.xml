@@ -24,10 +24,10 @@
     <string name="filmCell_imgDescription">Ceci est une image de l\'affiche de film.</string>
 
     <!-- Certificate Liste Activity -->
-    <string name="certificateListe_ajout">Ajout</string>
-    <string name="certificateListe_charge">Charger</string>
-    <string name="certificateListe_sauvegarde">Sauvegarder</string>
     <string name="certificateListe_https">Insert HTTPS URL...</string>
+    <string name="certificateListe_ajout">Ajout</string>
+    <string name="certificateListe_check">Check</string>
+    <string name="certificateListe_result">Result...</string>
 
     <!-- Cell Certificate List -->
     <string name="certificateCell_contenu">Contenu de certificat</string>

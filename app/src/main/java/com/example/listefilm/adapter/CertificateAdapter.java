@@ -8,16 +8,16 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.example.listefilm.R;
-import com.example.listefilm.model.Certificate;
+import com.example.listefilm.model.MonCertificate;
 
 import java.util.List;
 
 // Adaptater entre les données et la liste view du layout
-public class CertificateAdapter extends ArrayAdapter<Certificate>{
+public class CertificateAdapter extends ArrayAdapter<MonCertificate>{
     private Context             context;
-    public  List<Certificate>   certificateList;
+    public  List<MonCertificate>   certificateList;
 
-    public CertificateAdapter(Context context, List<Certificate> certificateList) {
+    public CertificateAdapter(Context context, List<MonCertificate> certificateList) {
         super(context, R.layout.activity_certificateliste, certificateList);
         this.context = context;
         this.certificateList = certificateList;

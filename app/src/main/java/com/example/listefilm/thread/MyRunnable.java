@@ -71,11 +71,14 @@ public class MyRunnable implements Runnable {
             urlConnection = (HttpURLConnection) monURL.openConnection();
             InputStream in = new BufferedInputStream(urlConnection.getInputStream());
             bmp = BitmapFactory.decodeStream(in);
-        } catch (MalformedURLException e) {
+        }
+        catch (MalformedURLException e) {
             e.printStackTrace();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
-        } finally {
+        }
+        finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
             }

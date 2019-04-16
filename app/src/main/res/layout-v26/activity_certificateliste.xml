@@ -18,11 +18,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:autofillHints=""
                 android:ems="10"
                 android:hint="@string/certificateListe_https"
                 android:inputType="textPersonName"
-                android:text="https://www.facebook.com" />
+                android:autofillHints="" />
         </TableRow>
 
         <TableRow
@@ -53,7 +52,7 @@
             <TextView
                 android:id="@+id/txt_result"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/certificateListe_result" />
         </TableRow>

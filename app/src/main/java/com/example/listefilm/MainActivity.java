@@ -6,6 +6,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
+
+// https://github.com/nassimkhatir?tab=repositories
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     Button btGoToFilmListe;
     Button btGoToCertificateListe;
