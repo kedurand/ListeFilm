@@ -5,7 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 
 import com.example.listefilm.adapter.FilmAdapter;
-import com.example.listefilm.model.Film;
+import com.example.listefilm.model.FilmImg;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -20,19 +20,20 @@ import java.net.URL;
 // On obtient de meilleurs performance qu'avec le AsyncTask
 // Son cousin : Callable permet de rendre un résultat dans l'objet Future
 public class MyRunnable implements Runnable {
-    private Film film;
+    private WeakReference<FilmImg> wkFilm;
     // Les weakreference ne concerne que les objets graphiques
     private WeakReference<FilmAdapter> wkAdapter;
     // Il nous faut une strong reference dans nos méthode pour manipuler l'objet
     private FilmAdapter adapter;
     private String url;
-    private Handler handlerUI;
+    // Weakreference à l'handler principal du programme
+    private WeakReference<Handler> wkHandlerUI;
 
-    public MyRunnable(Film film, FilmAdapter adapter, String url, Handler handlerUI) {
-        this.film = film;
-        this.wkAdapter = new WeakReference<FilmAdapter>(adapter) ;
+    public MyRunnable(FilmImg film, FilmAdapter adapter, String url, Handler handlerUI) {
+        this.wkFilm = new WeakReference<>(film);
+        this.wkAdapter = new WeakReference<>(adapter) ;
         this.url = url;
-        this.handlerUI = handlerUI;
+        this.wkHandlerUI = new WeakReference<>(handlerUI);
     }
 
     @Override
@@ -40,7 +41,8 @@ public class MyRunnable implements Runnable {
         try {
             Thread.sleep(1000);
             Bitmap btm = this.downloadBitmapFromURL(this.url);
-            this.film.setImage(btm);
+            FilmImg film = this.wkFilm.get();
+            film.setImg(btm);
 
             // Pour manipuler notre adaptateur, il faut le recupérer depuis notre weakref
             // On fait une strong référence depuis la weak
@@ -49,7 +51,8 @@ public class MyRunnable implements Runnable {
             if(this.adapter != null){
                 // Poste le travail graphique à effectuer dans le Handler Thread UI
                 // Car c'est le seul abilité à le faire dans la hiérarchie Android
-                this.handlerUI.post(new Runnable() {
+                Handler handlerUI = this.wkHandlerUI.get();
+                handlerUI.post(new Runnable() {
                     @Override
                     public void run() {
                         adapter.notifyDataSetChanged();
@@ -62,7 +65,7 @@ public class MyRunnable implements Runnable {
     }
 
     private Bitmap downloadBitmapFromURL(String url) {
-        URL monURL = null;
+        URL monURL;
         HttpURLConnection urlConnection = null;
         Bitmap bmp = null;
 

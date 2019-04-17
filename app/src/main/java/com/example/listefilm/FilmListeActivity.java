@@ -1,6 +1,9 @@
 package com.example.listefilm;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
@@ -12,16 +15,19 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.listefilm.adapter.FilmAdapter;
+import com.example.listefilm.asynctask.AT_GetFilmIMDB;
 import com.example.listefilm.asynctask.MyAsyncTask;
 import com.example.listefilm.handler.MyHandlerThreadMessage;
-import com.example.listefilm.model.Film;
+import com.example.listefilm.model.FilmImg;
 import com.example.listefilm.model.ParamThread;
 import com.example.listefilm.thread.MyRunnable;
 
@@ -32,6 +38,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class FilmListeActivity extends AppCompatActivity implements View.OnClickListener{
+    private final Context context = this;
+
     private Button btAjout;
     private Button btSupprTout;
     private Button btAsyncS;
@@ -44,8 +52,11 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
     private final String sImgURL = "http://lorempixel.com/400/400/";
 
-    public  List<Film>  filmList;
+    public  List<FilmImg>  filmList;
     private FilmAdapter adapter;
+
+    // L'ID demandée à l'utilisateur pour le film
+    private String filmID;
 
     // Un Handler UI tourne constamment en Android et est le seul a être abilité de toucher
     // aux objets graphique. On doit donc déposer du travail directement dans sa queue via post()
@@ -130,7 +141,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
     private void loadingListView(){
         this.filmList = new ArrayList<>();
-        this.filmList.addAll(Film.listAll(Film.class));
+        this.filmList.addAll(FilmImg.listAll(FilmImg.class));
         this.adapter = new FilmAdapter(this.getApplicationContext(), this.filmList);
         this.listView.setAdapter(this.adapter);
         this.listView.setOnItemClickListener(new ListClickHandler());
@@ -139,12 +150,13 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     // Recharge la List avec ce qui est dans la BD
     private void refreshListView(){
         this.filmList.clear();
-        this.filmList.addAll(Film.listAll(Film.class));
+        this.filmList.addAll(FilmImg.listAll(FilmImg.class));
         this.adapter.notifyDataSetChanged();
     }
 
     // Permet d'ajouter un film
-    private void ajoutFilm(){
+    private void ajoutFilm(String id){
+        /*
         Film film = new Film("TitreTest", "RealisateurTest",
                         "ProducteurTest", "AnneeTest");
         try{
@@ -157,11 +169,16 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
         catch (Exception e){
             Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();
         }
+        */
+
+        AT_GetFilmIMDB at_getFilmIMDB = new AT_GetFilmIMDB(this.filmList, this.adapter);
+        // lance la requête API pour récupérer le film et actualiser la liste !
+        at_getFilmIMDB.execute(id);
     }
 
     private void supprTout(){
         try {
-            Film.deleteAll(Film.class);
+            FilmImg.deleteAll(FilmImg.class);
             this.refreshListView();
             Toast.makeText(this, "Tous les films ont été supprimé",
                             Toast.LENGTH_LONG).show();
@@ -177,7 +194,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     private void asyncS(){
         MyAsyncTask myAsyncTask;
 
-        for(Film film : this.filmList) {
+        for(FilmImg film : this.filmList) {
             myAsyncTask = new MyAsyncTask(film, this.adapter);
             myAsyncTask.execute(this.sImgURL);
         }
@@ -187,7 +204,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     private void asyncP(){
         MyAsyncTask myAsyncTask;
 
-        for(Film film : this.filmList) {
+        for(FilmImg film : this.filmList) {
             myAsyncTask = new MyAsyncTask(film, this.adapter);
             myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, this.sImgURL);
         }
@@ -197,7 +214,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     private void threads(){
         Thread thread;
 
-        for(Film film : this.filmList) {
+        for(FilmImg film : this.filmList) {
             thread = new Thread(new MyRunnable(film, this.adapter, this.sImgURL, this.handlerUI));
             // Il est important d'utiliser start() pour lancer un nouveau thread
             // Si l'on fait un simple run(), il va juste run le thread courant
@@ -211,7 +228,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     // On peut aussi bien déposer un Runnable qu'un message dont on doit spécifier l'action associé
     // Permet d'alléger le main Handler UI
     private void handlerTR(){
-        for(Film film : this.filmList) {
+        for(FilmImg film : this.filmList) {
             this.handlerFilm.post(new MyRunnable(film, this.adapter, this.sImgURL, this.handlerUI));
         }
     }
@@ -221,7 +238,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     // Le handler devra donc pouvoir réagir en fonction du type de message
     // On peut passer des objets directement dans le message
     private void handlerTM(){
-        for(Film film : this.filmList) {
+        for(FilmImg film : this.filmList) {
             // Au lieu de recréer un message à chaque film
             // on va obtenir un message déjà existant si possible
             Message msg = Message.obtain();
@@ -238,7 +255,7 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     // Même si on met 4 en nombre de pool initial, s'il y a un coeur du CPU qui est en veille
     // L'on aura pas les 4 pool initial
     private void pool(){
-        for(Film film : this.filmList) {
+        for(FilmImg film : this.filmList) {
             this.threadPoolExecutor.execute(new MyRunnable(film, this.adapter,this.sImgURL, this.handlerUI));
         }
     }
@@ -247,8 +264,9 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.bt_ajout:
-                this.ajoutFilm();
                 this.checkLocationPermission();
+                this.showDialog();
+                this.ajoutFilm(this.filmID);
                 break;
             case R.id.bt_supprTout:
                 this.supprTout();
@@ -345,4 +363,53 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
+
+    private void showDialog(){
+        // Recupère le donneur de vie de layout de l'activité
+        LayoutInflater li = LayoutInflater.from(this.context);
+        // Récupère la vue du layout du dialogue
+        View promptsView = li.inflate(R.layout.dialog_id, null);
+        // Créer une alerte dialogue
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this.context);
+
+        // Set le layout.xml à la vue to alertdialog builder
+        alertDialogBuilder.setView(promptsView);
+
+        // Récupération en constante du mot de passe entré par l'utilisateur
+        final EditText idInput = promptsView.findViewById(R.id.txt_id);
+
+        // set dialog message
+        alertDialogBuilder.setCancelable(false)
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                // get user input and set it to property of the class
+                                FilmListeActivity.this.filmID = idInput.getText().toString();
+                                Toast.makeText(getApplicationContext(),idInput.getText().toString(),
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                .setNegativeButton("Annuler",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                dialog.cancel();
+                                Intent intent = new Intent( getApplicationContext(),
+                                                            FilmListeActivity.class);
+                                startActivity(intent);
+                                // When calling finish() on an activity, the method onDestroy()
+                                // is executed this method can do things like:
+                                // Dismiss any dialogs the activity was managing.
+                                // Close any cursors the activity was managing.
+                                // Close any open search dialog
+                                // Permet d'enlever l'activité du dessus
+                                finish();
+                            }
+                        });
+
+        // create alert dialog
+        AlertDialog alertDialog = alertDialogBuilder.create();
+
+        // show it
+        alertDialog.show();
+    }
 }

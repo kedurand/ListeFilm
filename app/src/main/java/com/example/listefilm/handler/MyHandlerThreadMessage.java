@@ -22,7 +22,7 @@ public class MyHandlerThreadMessage implements Handler.Callback {
                 ParamThread paramThread = (ParamThread) message.obj;
                 // Utilisation du Runnable déjà codé pour éviter de recoder le run()
                 // Le runnable contient la weakreference qui va bien
-                MyRunnable myRunnable = new MyRunnable( paramThread.getFilm(),
+                MyRunnable myRunnable = new MyRunnable( paramThread.getFilmImg(),
                                                         paramThread.getAdapter(),
                                                         paramThread.getUrl(),
                                                         paramThread.getHandlerUI());

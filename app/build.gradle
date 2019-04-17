@@ -48,8 +48,10 @@ dependencies {
     testImplementation "androidx.arch.core:core-testing:$lifecycle_version"
 
     // Navigation
-    def nav_version = "2.1.0-alpha01"
+    def nav_version = "2.1.0-alpha02"
     implementation "androidx.navigation:navigation-fragment:$nav_version" // For Kotlin use navigation-fragment-ktx
     implementation "androidx.navigation:navigation-ui:$nav_version" // For Kotlin use navigation-ui-ktx
 
+    // Ajout de gson
+    implementation 'com.google.code.gson:gson:2.8.2'
 }

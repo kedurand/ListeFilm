@@ -17,7 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.listefilm.adapter.CertificateAdapter;
-import com.example.listefilm.model.Film;
 import com.example.listefilm.model.MonCertificate;
 
 import java.io.IOException;
@@ -26,8 +25,6 @@ import java.net.URL;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -36,9 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class CertificateListeActivity extends AppCompatActivity implements View.OnClickListener {
@@ -128,7 +123,7 @@ public class CertificateListeActivity extends AppCompatActivity implements View.
             // Il faut se connecter dans tous les cas, l'open ne fait que la préparer
             urlConnection.connect();
             // Récupération de la liste des certificats dont celle de l'autorité
-            List<Certificate> cs = Arrays.asList(urlConnection.getServerCertificates());
+            Certificate[] cs = urlConnection.getServerCertificates();
 
             for (Certificate c : cs){
                 // Caster en ce type de certificat pour récupérer certaines informations
@@ -171,9 +166,9 @@ public class CertificateListeActivity extends AppCompatActivity implements View.
     }
 
     private void check(String url){
-        String tmfA = null;
-        TrustManagerFactory tmf = null;
-        URL monURL = null;
+        String tmfA;
+        TrustManagerFactory tmf;
+        URL monURL;
         HttpsURLConnection urlConnection = null;
 
         // Il faut initialiser notre contexte de sécurité
@@ -187,7 +182,7 @@ public class CertificateListeActivity extends AppCompatActivity implements View.
             this.sslContext.init(null, tmf.getTrustManagers(), null);
 
             // Connection à l'URL
-            monURL =  new URL(url);;
+            monURL =  new URL(url);
             urlConnection = (HttpsURLConnection) monURL.openConnection();
             // Il faut set l'environnement de sécurité de connexion, en utiliser nos certificats
             // stocké dans le keystroke via le trustmanager

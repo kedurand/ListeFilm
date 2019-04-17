@@ -6,23 +6,23 @@ import com.example.listefilm.adapter.FilmAdapter;
 
 public class ParamThread {
     private FilmAdapter adapter;
-    private Film film;
+    private FilmImg filmImg;
     private String url;
     private Handler handlerUI;
 
-    public ParamThread(Film film, FilmAdapter adapter , String url, Handler handlerUI) {
-        this.film = film;
+    public ParamThread(FilmImg film, FilmAdapter adapter , String url, Handler handlerUI) {
+        this.filmImg = film;
         this.adapter = adapter;
         this.url = url;
         this.handlerUI = handlerUI;
     }
 
-    public Film getFilm() {
-        return film;
+    public FilmImg getFilmImg() {
+        return filmImg;
     }
 
-    public void setFilm(Film film) {
-        this.film = film;
+    public void setFilmImg(FilmImg film) {
+        this.filmImg = film;
     }
 
     public FilmAdapter getAdapter() {

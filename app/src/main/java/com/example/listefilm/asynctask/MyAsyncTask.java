@@ -5,7 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 
 import com.example.listefilm.adapter.FilmAdapter;
-import com.example.listefilm.model.Film;
+import com.example.listefilm.model.FilmImg;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -29,18 +29,19 @@ import java.net.URL;
     n'est pas référencé par autre chose (mais compliqué)
  */
 public class MyAsyncTask extends AsyncTask<String, Integer, Bitmap> {
-    private Film film;
     // On veut avoir une référence sur un objet graphique d'un autre thread afin de pouvoir
     // informer l'utilisateur
     // Weakreference: permet de rendre null la référence s'il n'y a plus de strong references
     //                pointant dessus. Si count(Strong Reference) = 0 => WeakReference meurt
     // Au lieu de faire "a = b" => WeakReference<T> a = Weakreference (b)
+    private WeakReference<FilmImg> wkFilm;
+    private FilmImg film;
     private WeakReference<FilmAdapter> wkAdapter;
     private FilmAdapter adapter;
 
-    public MyAsyncTask(Film film, FilmAdapter adapter) {
-        this.film = film;
-        this.wkAdapter = new WeakReference<FilmAdapter>(adapter);
+    public MyAsyncTask(FilmImg film, FilmAdapter adapter) {
+        this.wkFilm = new WeakReference<>(film);
+        this.wkAdapter = new WeakReference<>(adapter);
     }
 
     @Override
@@ -65,7 +66,8 @@ public class MyAsyncTask extends AsyncTask<String, Integer, Bitmap> {
     @Override
     protected void onPostExecute(Bitmap bitmap) {
         super.onPostExecute(bitmap);
-        this.film.setImage(bitmap);
+        this.film = this.wkFilm.get();
+        this.film.setImg(bitmap);
         // Impossible de rendre l'image permanente dans le set
         // Les images doivent être télécharger
         // Les stocker dans une BDD c'est pas performant
@@ -80,7 +82,7 @@ public class MyAsyncTask extends AsyncTask<String, Integer, Bitmap> {
     }
 
     private Bitmap downloadBitmapFromURL(String url){
-        URL monURL = null;
+        URL monURL;
         HttpURLConnection urlConnection = null;
         Bitmap bmp = null;
 
