@@ -12,15 +12,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import javax.net.ssl.HttpsURLConnection;
-
 public class AT_GetFilmIMDB extends AsyncTask<String, Integer, FilmImg> {
     private static final String URL_API_KEY = "743ae636";
-    private static String URL_API = "http://www.omdbapi.com/?i=%1&apikey=%2";
+    private static String URL_API = "http://www.omdbapi.com/?apikey=";
 
     private WeakReference<List<FilmImg>> wkFilmList;
     private List<FilmImg>  filmList;
@@ -46,33 +45,40 @@ public class AT_GetFilmIMDB extends AsyncTask<String, Integer, FilmImg> {
         final Gson gson = gsonBuilder.setPrettyPrinting().create();
         // Retourne une instance d'objet d'après le texte JSON
         Film film = gson.fromJson(responseJSON, Film.class);
-        // Création d'un filmImg
-        return new FilmImg(film,null);
+        // Retourne une instance FilmImg
+        return new FilmImg(film, null);
     }
 
     @Override
     protected void onPostExecute(FilmImg film) {
         super.onPostExecute(film);
-        // Ajout du film dans la BDD SQLite
-        film.save();
-        // Actualisation de la liste des films et notification de l'adapter
-        this.filmList = this.wkFilmList.get();
-        this.filmList.clear();
-        this.filmList.addAll(FilmImg.listAll(FilmImg.class));
-        this.adapter = this.wkAdapter.get();
-        this.adapter.notifyDataSetChanged();
+        try{
+            // Sauvegarde le film, important car sinon disparait
+            film.getFilm().save();
+            // Pareil pour le filmIMG dans BDD SQLite
+            film.save();
+            // Actualisation de la liste des films et notification de l'adapter
+            this.filmList = this.wkFilmList.get();
+            this.filmList.clear();
+            this.filmList.addAll(FilmImg.listAll(FilmImg.class));
+            this.adapter = this.wkAdapter.get();
+            this.adapter.notifyDataSetChanged();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     // Appel de l'API selon l'id et notre key pour avoir les information IMDB d'un film
     private String getFicheFilmOMDB(String id, String key){
         // Création de l'URL via les placeholder
-        String url = String.format(AT_GetFilmIMDB.URL_API, id, AT_GetFilmIMDB.URL_API_KEY);
+        String url = AT_GetFilmIMDB.URL_API + AT_GetFilmIMDB.URL_API_KEY + "&i=" + id;
         StringBuilder sbuilder;
         BufferedReader reader = null;
 
         try {
             URL monURL = new URL(url);
-            HttpsURLConnection connection = (HttpsURLConnection) monURL.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) monURL.openConnection();
             connection.setRequestMethod("GET");
             connection.connect();
 

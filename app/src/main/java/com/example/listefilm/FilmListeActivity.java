@@ -196,7 +196,9 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
         for(FilmImg film : this.filmList) {
             myAsyncTask = new MyAsyncTask(film, this.adapter);
-            myAsyncTask.execute(this.sImgURL);
+            //myAsyncTask.execute(this.sImgURL);
+            // On va utiliser l'URL fournit dans la fiche film pour télécahrger la couverture
+            myAsyncTask.execute(film.getFilm().getPoster());
         }
     }
 
@@ -206,7 +208,9 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
         for(FilmImg film : this.filmList) {
             myAsyncTask = new MyAsyncTask(film, this.adapter);
-            myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, this.sImgURL);
+            // myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, this.sImgURL);
+            // On va utiliser l'URL fournit dans la fiche film pour télécahrger la couverture
+            myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, film.getFilm().getPoster());
         }
     }
 
@@ -215,7 +219,11 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
         Thread thread;
 
         for(FilmImg film : this.filmList) {
-            thread = new Thread(new MyRunnable(film, this.adapter, this.sImgURL, this.handlerUI));
+            // thread = new Thread(new MyRunnable(film, this.adapter, this.sImgURL, this.handlerUI));
+            // On va utiliser l'URL fournit dans la fiche film pour télécahrger la couverture
+            thread = new Thread(new MyRunnable( film, this.adapter,
+                                                film.getFilm().getPoster(), this.handlerUI));
+
             // Il est important d'utiliser start() pour lancer un nouveau thread
             // Si l'on fait un simple run(), il va juste run le thread courant
             thread.start();
@@ -229,7 +237,10 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     // Permet d'alléger le main Handler UI
     private void handlerTR(){
         for(FilmImg film : this.filmList) {
-            this.handlerFilm.post(new MyRunnable(film, this.adapter, this.sImgURL, this.handlerUI));
+            // this.handlerFilm.post(new MyRunnable(film, this.adapter, this.sImgURL, this.handlerUI));
+            // On va utiliser l'URL fournit dans la fiche film pour télécahrger la couverture
+            this.handlerFilm.post(new MyRunnable(film, this.adapter,
+                                                 film.getFilm().getPoster(), this.handlerUI));
         }
     }
 
@@ -245,7 +256,10 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
             // Donne le type depuis l'énumération de la casse du type de message
             msg.what = MyHandlerThreadMessage.iMsgType_DownloadImg;
             // Lui passe un objet en paramètre, devoir faire un objet pour englober tout
-            msg.obj = new ParamThread(film, this.adapter, this.sImgURL, this.handlerUI);
+            // msg.obj = new ParamThread(film, this.adapter, this.sImgURL, this.handlerUI);
+            // On va utiliser l'URL fournit dans la fiche film pour télécahrger la couverture
+            msg.obj = new ParamThread(film, this.adapter, film.getFilm().getPoster(), this.handlerUI);
+
             // Post un message dans la queue du handler sous forme runnable
             this.handlerFilmMessage.sendMessage(msg);
         }
@@ -256,7 +270,10 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
     // L'on aura pas les 4 pool initial
     private void pool(){
         for(FilmImg film : this.filmList) {
-            this.threadPoolExecutor.execute(new MyRunnable(film, this.adapter,this.sImgURL, this.handlerUI));
+            //this.threadPoolExecutor.execute(new MyRunnable(film, this.adapter,this.sImgURL, this.handlerUI));
+            // On va utiliser l'URL fournit dans la fiche film pour télécahrger la couverture
+            this.threadPoolExecutor.execute(new MyRunnable(film, this.adapter,
+                                                    film.getFilm().getPoster(), this.handlerUI));
         }
     }
 
@@ -266,7 +283,6 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
             case R.id.bt_ajout:
                 this.checkLocationPermission();
                 this.showDialog();
-                this.ajoutFilm(this.filmID);
                 break;
             case R.id.bt_supprTout:
                 this.supprTout();
@@ -384,9 +400,11 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog,int id) {
                                 // get user input and set it to property of the class
-                                FilmListeActivity.this.filmID = idInput.getText().toString();
-                                Toast.makeText(getApplicationContext(),idInput.getText().toString(),
+                                String idFilm = idInput.getText().toString();
+                                FilmListeActivity.this.filmID = idFilm;
+                                Toast.makeText(getApplicationContext(),idFilm,
                                         Toast.LENGTH_SHORT).show();
+                                FilmListeActivity.this.ajoutFilm(idFilm);
                             }
                         })
                 .setNegativeButton("Annuler",

@@ -1,10 +1,13 @@
+
 package com.example.listefilm.model;
 
 import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.orm.SugarRecord;
 
-public class Film {
+public class Film extends SugarRecord {
+
     @SerializedName("Title")
     @Expose
     private String title;
@@ -80,43 +83,6 @@ public class Film {
     @SerializedName("Response")
     @Expose
     private String response;
-
-
-    public Film() {
-    }
-
-    public Film(String title, String year, String rated, String released, String runtime,
-                String genre, String director, String writer, String actors, String plot,
-                String language, String country, String awards, String poster,
-                List<Rating> ratings, String metascore, String imdbRating, String imdbVotes,
-                String imdbID, String type, String dVD, String boxOffice, String production,
-                String website, String response) {
-        this.title = title;
-        this.year = year;
-        this.rated = rated;
-        this.released = released;
-        this.runtime = runtime;
-        this.genre = genre;
-        this.director = director;
-        this.writer = writer;
-        this.actors = actors;
-        this.plot = plot;
-        this.language = language;
-        this.country = country;
-        this.awards = awards;
-        this.poster = poster;
-        this.ratings = ratings;
-        this.metascore = metascore;
-        this.imdbRating = imdbRating;
-        this.imdbVotes = imdbVotes;
-        this.imdbID = imdbID;
-        this.type = type;
-        this.dVD = dVD;
-        this.boxOffice = boxOffice;
-        this.production = production;
-        this.website = website;
-        this.response = response;
-    }
 
     public String getTitle() {
         return title;
@@ -319,5 +285,3 @@ public class Film {
     }
 
 }
-
-

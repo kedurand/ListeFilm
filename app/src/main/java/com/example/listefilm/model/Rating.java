@@ -1,23 +1,18 @@
+
 package com.example.listefilm.model;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.orm.SugarRecord;
 
-public class Rating {
+public class Rating extends SugarRecord {
+
     @SerializedName("Source")
     @Expose
     private String source;
     @SerializedName("Value")
     @Expose
     private String value;
-
-    public Rating() {
-    }
-
-    public Rating(String source, String value) {
-        this.source = source;
-        this.value = value;
-    }
 
     public String getSource() {
         return source;
