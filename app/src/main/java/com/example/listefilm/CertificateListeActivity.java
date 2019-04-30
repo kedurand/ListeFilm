@@ -347,6 +347,7 @@ public class CertificateListeActivity extends AppCompatActivity implements View.
             // Application du CS symétrique cipher crée plus haut
             CipherOutputStream cos = new CipherOutputStream(fos, cipher);
             // Création d'une abstraction Object pour y insérer des objets
+            // Ces objets doivent impérative implémenter la classe Serializable
             ObjectOutputStream oos = new ObjectOutputStream(cos);
             // Normalement on devrait y écrire des objets
             oos.writeObject(this.certificateList);

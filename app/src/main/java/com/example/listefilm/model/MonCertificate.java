@@ -2,7 +2,10 @@ package com.example.listefilm.model;
 
 import com.orm.SugarRecord;
 
-public class MonCertificate extends SugarRecord {
+import java.io.Serializable;
+
+// Object doit être sérializable pour être passé en objectOutputStream
+public class MonCertificate extends SugarRecord implements Serializable{
     private String contenu;
 
     public MonCertificate() {
