@@ -59,18 +59,27 @@ public class AT_SearchIMDB extends AsyncTask<String, Integer, List<Search>> {
             // Récupération de la strong value de l'adapter
             SearchAdapter adapter = this.wkAdapter.get();
 
-            // On va boucler sur chaque item de la liste et télécharger l'image
-            for(Search search : searchList){
-                // Création de l'objet search avec une possible image
+            // Si aucun résultat, crée un film vide...
+            if (searchList == null  || searchList.isEmpty()){
+                Search search = new Search();
+                search.setTitle("Pas de résultat pour la recherche....");
                 SearchImg searchImg = new SearchImg(search, (Bitmap) null);
-                // Téléchargement de l'image d'après l'URL et set dans l'objet
-                // Avec l'aide d'une async task
-                AT_SearchDownloadImg  at_searchDownloadImg = new AT_SearchDownloadImg(searchImg,
-                        adapter);
-                // Le set de l'image dans l'objet se fait dans l'AT tout comme le notify data change
-                at_searchDownloadImg.execute(search.getPoster());
-                // Ajout dans la liste
                 searchImgList.add(searchImg);
+            }
+            else{
+                // On va boucler sur chaque item de la liste et télécharger l'image
+                for(Search search : searchList){
+                    // Création de l'objet search avec une possible image
+                    SearchImg searchImg = new SearchImg(search, (Bitmap) null);
+                    // Téléchargement de l'image d'après l'URL et set dans l'objet
+                    // Avec l'aide d'une async task
+                    AT_SearchDownloadImg  at_searchDownloadImg = new AT_SearchDownloadImg(searchImg,
+                            adapter);
+                    // Le set de l'image dans l'objet se fait dans l'AT tout comme le notify data change
+                    at_searchDownloadImg.execute(search.getPoster());
+                    // Ajout dans la liste
+                    searchImgList.add(searchImg);
+                }
             }
         }
         catch (Exception e){

@@ -409,8 +409,10 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
                                 Toast.makeText(getApplicationContext(),idFilm,
                                         Toast.LENGTH_SHORT).show();
 
+                                dialog.dismiss();
                                 FilmListeActivity.this.showDialogList(idFilm);
 
+                                // Version en entrant directement l'ID
                                 // FilmListeActivity.this.ajoutFilm(idFilm);
                             }
                         })
@@ -418,16 +420,14 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog,int id) {
                                 dialog.cancel();
-                                Intent intent = new Intent( getApplicationContext(),
-                                                            FilmListeActivity.class);
-                                startActivity(intent);
                                 // When calling finish() on an activity, the method onDestroy()
                                 // is executed this method can do things like:
                                 // Dismiss any dialogs the activity was managing.
                                 // Close any cursors the activity was managing.
                                 // Close any open search dialog
                                 // Permet d'enlever l'activité du dessus
-                                finish();
+                                // Va retourner à l'accueil si on inflate pas une activité
+                                // finish();
                             }
                         });
 
@@ -452,6 +452,11 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
 
         List<SearchImg> searchImgList = new ArrayList<>();
         final SearchAdapter searchAdapter = new SearchAdapter(this.context, searchImgList);
+        // Récupère la liste view depuis la vue inflaté
+        ListView listView = promptsView.findViewById(R.id.lv_searchList);
+        // Lien de la listView avec l'adapter perso
+        listView.setAdapter(searchAdapter);
+
         AT_SearchIMDB at_searchIMDB = new AT_SearchIMDB(searchImgList, searchAdapter);
         at_searchIMDB.execute(value);
 
@@ -461,7 +466,14 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
                 // Récupération de l'item choisi
                 SearchImg searchImg = searchAdapter.getItem(which);
                 if (searchImg != null) {
-                    FilmListeActivity.this.ajoutFilm(searchImg.getSearch().getImdbID());
+                    String id = searchImg.getSearch().getImdbID();
+                    if (id != null){
+                        FilmListeActivity.this.ajoutFilm(searchImg.getSearch().getImdbID());
+                    }
+                    else{
+                        Toast.makeText(getApplicationContext(),"Pas d'ID pour ajouter le film",
+                                Toast.LENGTH_SHORT).show();
+                    }
                 }
                 dialog.dismiss();
             }
@@ -471,16 +483,6 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void onClick(DialogInterface dialog,int id) {
                 dialog.cancel();
-                Intent intent = new Intent( getApplicationContext(),
-                        FilmListeActivity.class);
-                startActivity(intent);
-                // When calling finish() on an activity, the method onDestroy()
-                // is executed this method can do things like:
-                // Dismiss any dialogs the activity was managing.
-                // Close any cursors the activity was managing.
-                // Close any open search dialog
-                // Permet d'enlever l'activité du dessus
-                finish();
             }
         });
 

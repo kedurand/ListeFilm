@@ -47,6 +47,7 @@ public class MyRunnable implements Runnable {
             Bitmap btm = this.downloadBitmapFromURL(this.url);
             FilmImg film = this.wkFilm.get();
             film.setImg(btm);
+            film.save();
 
             // Pour manipuler notre adaptateur, il faut le recupérer depuis notre weakref
             // On fait une strong référence depuis la weak
