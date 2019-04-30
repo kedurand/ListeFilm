@@ -5,7 +5,9 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 
 import com.example.listefilm.adapter.FilmAdapter;
+import com.example.listefilm.adapter.SearchAdapter;
 import com.example.listefilm.model.FilmImg;
+import com.example.listefilm.model.SearchImg;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 // On utilise une AsyncTask pour traiter des objets graphique lorsque l'on pas
 // pas de besoin conversationnel avec ce dernier, l'on peut donc le faire de manière asynchrone
@@ -28,17 +31,17 @@ import java.net.URL;
     Il est possible de garbage collecté un groupe d'objet qui se reférénce entre eux mais qui
     n'est pas référencé par autre chose (mais compliqué)
  */
-public class MyAsyncTask extends AsyncTask<String, Integer, Bitmap> {
+public class AT_SearchDownloadImg extends AsyncTask<String, Integer, Bitmap> {
     // On veut avoir une référence sur un objet graphique d'un autre thread afin de pouvoir
     // informer l'utilisateur
     // Weakreference: permet de rendre null la référence s'il n'y a plus de strong references
     //                pointant dessus. Si count(Strong Reference) = 0 => WeakReference meurt
     // Au lieu de faire "a = b" => WeakReference<T> a = Weakreference (b)
-    private WeakReference<FilmImg> wkFilm;
-    private WeakReference<FilmAdapter> wkAdapter;
+    private WeakReference<SearchImg> wkSearchImg;
+    private WeakReference<SearchAdapter> wkAdapter;
 
-    public MyAsyncTask(FilmImg film, FilmAdapter adapter) {
-        this.wkFilm = new WeakReference<>(film);
+    public AT_SearchDownloadImg(SearchImg searchImg, SearchAdapter adapter) {
+        this.wkSearchImg = new WeakReference<>(searchImg);
         this.wkAdapter = new WeakReference<>(adapter);
     }
 
@@ -64,15 +67,11 @@ public class MyAsyncTask extends AsyncTask<String, Integer, Bitmap> {
     @Override
     protected void onPostExecute(Bitmap bitmap) {
         super.onPostExecute(bitmap);
-        FilmImg film = this.wkFilm.get();
-        film.setImg(bitmap);
-        // Impossible de rendre l'image permanente dans le set
-        // Les images doivent être télécharger
-        // Les stocker dans une BDD c'est pas performant
-        film.save();
+        SearchImg searchImg = this.wkSearchImg.get();
+        searchImg.setImg(bitmap);
 
         // Récupération d'une strong reference de la weak reference pour manipuler l'objet graphique
-        FilmAdapter adapter = this.wkAdapter.get();
+        SearchAdapter adapter = this.wkAdapter.get();
         // Vérifie que la weak reference n'est pas déjà morte
         if(adapter != null) {
             adapter.notifyDataSetChanged();

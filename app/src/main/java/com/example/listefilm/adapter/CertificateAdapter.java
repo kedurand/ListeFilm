@@ -1,6 +1,7 @@
 package com.example.listefilm.adapter;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +16,7 @@ import java.util.List;
 // Adaptater entre les données et la liste view du layout
 public class CertificateAdapter extends ArrayAdapter<MonCertificate>{
     private Context             context;
-    public  List<MonCertificate>   certificateList;
+    private List<MonCertificate>   certificateList;
 
     public CertificateAdapter(Context context, List<MonCertificate> certificateList) {
         super(context, R.layout.activity_certificateliste, certificateList);
@@ -27,8 +28,9 @@ public class CertificateAdapter extends ArrayAdapter<MonCertificate>{
         TextView contenu;
     }
 
+    @NonNull
     @Override
-    public View getView(int i, View view, ViewGroup viewGroup) {
+    public View getView(int i, View view, @NonNull ViewGroup viewGroup) {
         CertificateHolder holder;
 
         if (view == null) {

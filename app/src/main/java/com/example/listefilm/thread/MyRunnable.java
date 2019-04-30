@@ -20,6 +20,10 @@ import java.net.URL;
 // On obtient de meilleurs performance qu'avec le AsyncTask
 // Son cousin : Callable permet de rendre un résultat dans l'objet Future
 public class MyRunnable implements Runnable {
+    /*
+        On choisit des weakreference lorsque l'on sait que cet objet est suceptible de disparaitre
+        Les strong sont pour les objets qui sont persistant (ex: HandlerUI)
+    */
     private WeakReference<FilmImg> wkFilm;
     // Les weakreference ne concerne que les objets graphiques
     private WeakReference<FilmAdapter> wkAdapter;

@@ -38,5 +38,10 @@
 
     <!-- Dialog ID -->
     <string name="dialog_id">Entrez l\'ID IMDB du film</string>
+    <string name="searchCell_titre">Titre</string>
+    <string name="searchCell_imgDescription">Ceci est une image de l\'affiche du film</string>
+    <string name="searchCell_imdbID">IMDB ID</string>
+    <string name="searchCell_type">Type</string>
+    <string name="searchCell_annee">Annee</string>
 
 </resources>

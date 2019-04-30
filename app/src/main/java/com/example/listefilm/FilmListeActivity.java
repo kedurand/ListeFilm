@@ -24,11 +24,14 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.listefilm.adapter.FilmAdapter;
+import com.example.listefilm.adapter.SearchAdapter;
 import com.example.listefilm.asynctask.AT_GetFilmIMDB;
+import com.example.listefilm.asynctask.AT_SearchIMDB;
 import com.example.listefilm.asynctask.MyAsyncTask;
 import com.example.listefilm.handler.MyHandlerThreadMessage;
 import com.example.listefilm.model.FilmImg;
 import com.example.listefilm.model.ParamThread;
+import com.example.listefilm.model.SearchImg;
 import com.example.listefilm.thread.MyRunnable;
 
 import java.util.ArrayList;
@@ -402,9 +405,13 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
                                 // get user input and set it to property of the class
                                 String idFilm = idInput.getText().toString();
                                 FilmListeActivity.this.filmID = idFilm;
+
                                 Toast.makeText(getApplicationContext(),idFilm,
                                         Toast.LENGTH_SHORT).show();
-                                FilmListeActivity.this.ajoutFilm(idFilm);
+
+                                FilmListeActivity.this.showDialogList(idFilm);
+
+                                // FilmListeActivity.this.ajoutFilm(idFilm);
                             }
                         })
                 .setNegativeButton("Annuler",
@@ -428,6 +435,59 @@ public class FilmListeActivity extends AppCompatActivity implements View.OnClick
         AlertDialog alertDialog = alertDialogBuilder.create();
 
         // show it
+        alertDialog.show();
+    }
+
+    private void showDialogList(String value){
+        // Recupère le donneur de vie de layout de l'activité
+        LayoutInflater li = LayoutInflater.from(this.context);
+        // Récupère la vue du layout du dialogue
+        View promptsView = li.inflate(R.layout.dialog_searchliste, null);
+
+        // setup the alert builder
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this.context);
+        alertDialogBuilder.setTitle("Choose your film");
+        // Set le layout.xml à la vue to alertdialog builder
+        alertDialogBuilder.setView(promptsView);
+
+        List<SearchImg> searchImgList = new ArrayList<>();
+        final SearchAdapter searchAdapter = new SearchAdapter(this.context, searchImgList);
+        AT_SearchIMDB at_searchIMDB = new AT_SearchIMDB(searchImgList, searchAdapter);
+        at_searchIMDB.execute(value);
+
+        alertDialogBuilder.setAdapter(searchAdapter, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Récupération de l'item choisi
+                SearchImg searchImg = searchAdapter.getItem(which);
+                if (searchImg != null) {
+                    FilmListeActivity.this.ajoutFilm(searchImg.getSearch().getImdbID());
+                }
+                dialog.dismiss();
+            }
+        });
+
+        alertDialogBuilder.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog,int id) {
+                dialog.cancel();
+                Intent intent = new Intent( getApplicationContext(),
+                        FilmListeActivity.class);
+                startActivity(intent);
+                // When calling finish() on an activity, the method onDestroy()
+                // is executed this method can do things like:
+                // Dismiss any dialogs the activity was managing.
+                // Close any cursors the activity was managing.
+                // Close any open search dialog
+                // Permet d'enlever l'activité du dessus
+                finish();
+            }
+        });
+
+        // create and show the alert dialog
+        AlertDialog alertDialog = alertDialogBuilder.create();
+
+        // Show it
         alertDialog.show();
     }
 }

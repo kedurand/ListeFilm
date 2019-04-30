@@ -3,9 +3,10 @@ package com.example.listefilm.asynctask;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 
-import com.example.listefilm.adapter.FilmAdapter;
-import com.example.listefilm.model.Film;
-import com.example.listefilm.model.FilmImg;
+import com.example.listefilm.adapter.SearchAdapter;
+import com.example.listefilm.model.Search;
+import com.example.listefilm.model.SearchImg;
+import com.example.listefilm.model.SearchList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -18,15 +19,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-public class AT_GetFilmIMDB extends AsyncTask<String, Integer, FilmImg> {
+public class AT_SearchIMDB extends AsyncTask<String, Integer, List<Search>> {
     private static final String URL_API_KEY = "743ae636";
     private static String URL_API = "http://www.omdbapi.com/?apikey=";
 
-    private WeakReference<List<FilmImg>> wkFilmList;
-    private WeakReference<FilmAdapter> wkAdapter;
+    private WeakReference<List<SearchImg>> wkSearchList;
+    private WeakReference<SearchAdapter> wkAdapter;
 
-    public AT_GetFilmIMDB(List<FilmImg> filmList, FilmAdapter adapter) {
-        this.wkFilmList = new WeakReference<>(filmList);
+    public AT_SearchIMDB(List<SearchImg> searchImg, SearchAdapter adapter) {
+        this.wkSearchList = new WeakReference<>(searchImg);
         this.wkAdapter = new WeakReference<>(adapter);
     }
 
@@ -36,32 +37,41 @@ public class AT_GetFilmIMDB extends AsyncTask<String, Integer, FilmImg> {
     }
 
     @Override
-    protected FilmImg doInBackground(String... strings) {
+    protected List<Search> doInBackground(String... strings) {
         // Récupération de la réponse JSON de l'appel de l'API avec ID et KEY
-        final String responseJSON = this.getFicheFilmOMDB(strings[0], AT_GetFilmIMDB.URL_API_KEY);
+        final String responseJSON = this.getFicheFilmOMDB(strings[0], AT_SearchIMDB.URL_API_KEY);
         // Construction d'un objet Gson pour faire convertir le JSON en objet
         final GsonBuilder gsonBuilder = new GsonBuilder();
         final Gson gson = gsonBuilder.setPrettyPrinting().create();
         // Retourne une instance d'objet d'après le texte JSON
-        Film film = gson.fromJson(responseJSON, Film.class);
-        // Retourne une instance FilmImg
-        return new FilmImg(film, (Bitmap) null);
+        SearchList searchList = gson.fromJson(responseJSON, SearchList.class);
+
+        return searchList.getSearch();
     }
 
     @Override
-    protected void onPostExecute(FilmImg film) {
-        super.onPostExecute(film);
+    protected void onPostExecute(List<Search> searchList) {
+        super.onPostExecute(searchList);
         try{
-            // Sauvegarde le film, important car sinon disparait
-            film.getFilm().save();
-            // Pareil pour le filmIMG dans BDD SQLite
-            film.save();
-            // Actualisation de la liste des films et notification de l'adapter
-            List<FilmImg> filmList = this.wkFilmList.get();
-            filmList.clear();
-            filmList.addAll(FilmImg.listAll(FilmImg.class));
-            FilmAdapter adapter = this.wkAdapter.get();
-            adapter.notifyDataSetChanged();
+            // Clean de la liste de searchImg destiné à la listeview
+            List<SearchImg> searchImgList = this.wkSearchList.get();
+            searchImgList.clear();
+            // Récupération de la strong value de l'adapter
+            SearchAdapter adapter = this.wkAdapter.get();
+
+            // On va boucler sur chaque item de la liste et télécharger l'image
+            for(Search search : searchList){
+                // Création de l'objet search avec une possible image
+                SearchImg searchImg = new SearchImg(search, (Bitmap) null);
+                // Téléchargement de l'image d'après l'URL et set dans l'objet
+                // Avec l'aide d'une async task
+                AT_SearchDownloadImg  at_searchDownloadImg = new AT_SearchDownloadImg(searchImg,
+                        adapter);
+                // Le set de l'image dans l'objet se fait dans l'AT tout comme le notify data change
+                at_searchDownloadImg.execute(search.getPoster());
+                // Ajout dans la liste
+                searchImgList.add(searchImg);
+            }
         }
         catch (Exception e){
             e.printStackTrace();
@@ -69,12 +79,10 @@ public class AT_GetFilmIMDB extends AsyncTask<String, Integer, FilmImg> {
     }
 
     // Appel de l'API selon l'id et notre key pour avoir les information IMDB d'un film
-    private String getFicheFilmOMDB(String id, String key){
-        // Création de l'URL via les placeholder
-        String url = AT_GetFilmIMDB.URL_API + AT_GetFilmIMDB.URL_API_KEY + "&i=" + id;
-
+    private String getFicheFilmOMDB(String value, String key){
         // Exemple de recherche de film
         // http://www.omdbapi.com/?apikey=743ae636&s=Avengers
+        String url = AT_SearchIMDB.URL_API + AT_SearchIMDB.URL_API_KEY + "&s=" + value;
 
         StringBuilder sbuilder;
         BufferedReader reader = null;

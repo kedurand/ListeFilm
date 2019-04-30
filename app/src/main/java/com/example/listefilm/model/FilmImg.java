@@ -19,12 +19,9 @@ public class FilmImg extends SugarRecord {
         this.img = img;
     }
 
-    public FilmImg(Film film) {
+    public FilmImg(Film film, Bitmap img) {
         this.film = film;
-    }
-
-    public FilmImg(byte[] img) {
-        this.img = img;
+        this.img = ImageUtil.GetByteFromBitmap(img);
     }
 
     public Film getFilm() {
