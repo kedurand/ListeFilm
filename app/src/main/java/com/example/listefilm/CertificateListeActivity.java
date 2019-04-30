@@ -19,11 +19,19 @@ import android.widget.Toast;
 import com.example.listefilm.adapter.CertificateAdapter;
 import com.example.listefilm.model.MonCertificate;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -32,6 +40,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -137,6 +151,8 @@ public class CertificateListeActivity extends AppCompatActivity implements View.
 
                 // Sauvegarde le certificat dans la BDD
                 // mc.save(); //Faudrait lier le keystroke à cette liste !!
+                mc.save();
+
                 this.certificateList.add(mc);
             }
             //Refresh de la liste d'après la BDD
@@ -253,30 +269,43 @@ public class CertificateListeActivity extends AppCompatActivity implements View.
         // set dialog message
         alertDialogBuilder.setCancelable(false)
                 .setPositiveButton("OK",
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog,int id) {
-                            // get user input and set it to result
-                            // edit text
-                            Toast.makeText(getApplicationContext(),pwdInput.getText(),
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    })
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                // get user input and set it to result
+                                // edit text
+                                Toast.makeText(getApplicationContext(),pwdInput.getText(),
+                                        Toast.LENGTH_SHORT).show();
+
+                                // Encrypte les certificats
+                                CertificateListeActivity.this.encryptFile(pwdInput.getText().toString());
+
+                                try {
+                                    Thread.sleep(1000);
+                                }
+                                catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+
+                                // Decrypte les certificats
+                                CertificateListeActivity.this.decryptFile(pwdInput.getText().toString());
+                            }
+                        })
                 .setNegativeButton("Annuler",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog,int id) {
-                        dialog.cancel();
-                        Intent intent = new Intent( getApplicationContext(),
-                                                    MainActivity.class);
-                        startActivity(intent);
-                        // When calling finish() on an activity, the method onDestroy()
-                        // is executed this method can do things like:
-                        // Dismiss any dialogs the activity was managing.
-                        // Close any cursors the activity was managing.
-                        // Close any open search dialog
-                        // Permet d'enlever l'activité du dessus
-                        finish();
-                    }
-                });
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                dialog.cancel();
+                                Intent intent = new Intent( getApplicationContext(),
+                                        MainActivity.class);
+                                startActivity(intent);
+                                // When calling finish() on an activity, the method onDestroy()
+                                // is executed this method can do things like:
+                                // Dismiss any dialogs the activity was managing.
+                                // Close any cursors the activity was managing.
+                                // Close any open search dialog
+                                // Permet d'enlever l'activité du dessus
+                                finish();
+                            }
+                        });
 
         // create alert dialog
         AlertDialog alertDialog = alertDialogBuilder.create();
@@ -285,4 +314,118 @@ public class CertificateListeActivity extends AppCompatActivity implements View.
         alertDialog.show();
     }
 
+
+    public void encryptFile(String pwd){
+        try {
+            // Récupère le mot de passe sous forme de tableau de byte
+            byte[] pwdByte = pwd.getBytes();
+
+            // Permet d'effectuer du hachage
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+            // Récupère les données
+            messageDigest.update(pwdByte);
+            // Digère et remplie les données puis réinitialise le tout
+            byte[] digest = messageDigest.digest();
+            // Redimenssionne le hashage en 16
+            digest = Arrays.copyOf(digest, 16);
+
+            // Représente le secret
+            SecretKey secretKeyAES = new SecretKeySpec(digest, "AES256");
+
+            // Utilisation d'un CS symétrique, utilisation d'un algo plus que AES
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            // Association du secret crée plus haut au CS cipher
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeyAES);
+
+            // Le path de l'application courante
+            String applicationPath = this.getApplicationContext().getFilesDir().getPath();
+            // Création du fichier à encrypter
+            File encryptedFile = new File(applicationPath + File.separator + "pwdEncrypted.slr");
+            // Création d'une instance pour écrire sur ce fichier
+            FileOutputStream fos = new FileOutputStream(encryptedFile);
+
+            // Application du CS symétrique cipher crée plus haut
+            CipherOutputStream cos = new CipherOutputStream(fos, cipher);
+            // Création d'une abstraction Object pour y insérer des objets
+            ObjectOutputStream oos = new ObjectOutputStream(cos);
+            // Normalement on devrait y écrire des objets
+            oos.writeObject(this.certificateList);
+            // On force l'écriture dans le fichier
+            oos.flush();
+            oos.close();
+
+            Toast.makeText(this.context, "Encryption du fichier est un succés !",
+                    Toast.LENGTH_SHORT).show();
+        }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void decryptFile(String pwd){
+        try {
+            // On veut récupérer la liste des certificats présent dans le fichier encrypté
+            List<MonCertificate> listCertificates = new ArrayList<>();
+
+            // Récupère le mot de passe sous forme de tableau de byte
+            byte[] pwdByte = pwd.getBytes();
+
+            // Permet d'effectuer du hachage
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+            // Récupère les données
+            messageDigest.update(pwdByte);
+            // Digère et remplie les données puis réinitialise le tout
+            byte[] digest = messageDigest.digest();
+            // Redimenssionne le hashage en 16
+            digest = Arrays.copyOf(digest, 16);
+
+            // Représente le secret
+            SecretKey secretKeyAES = new SecretKeySpec(digest, "AES256");
+
+            // Utilisation d'un CS symétrique, utilisation d'un algo plus que AES
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            // Association du secret crée plus haut au CS cipher
+            cipher.init(Cipher.DECRYPT_MODE, secretKeyAES);
+
+            // Le path de l'application courante
+            String applicationPath = this.getApplicationContext().getFilesDir().getPath();
+            // Création du fichier à encrypter
+            File encryptedFile = new File(applicationPath + File.separator + "pwdEncrypted.slr");
+            // Création d'une instance pour lire sur ce fichier
+            FileInputStream fis = new FileInputStream(encryptedFile);
+
+            // Application du CS symétrique cipher crée plus haut
+            CipherInputStream cis = new CipherInputStream(fis, cipher);
+            // Création d'une abstraction Object pour y insérer des objets
+            ObjectInputStream ois = new ObjectInputStream(cis);
+            // Récupération des objects présent dans le fichier
+            listCertificates = (List<MonCertificate>) ois.readObject();
+            // On force l'écriture dans le fichier
+            ois.close();
+
+            Toast.makeText(this.context, "Décryption du fichier est un succés !",
+                    Toast.LENGTH_SHORT).show();
+        }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }
